@@ -1,8 +1,9 @@
 import { pool } from '../db/index.mjs';
 import Router from '@koa/router';
 import bcrypt from 'bcryptjs';
-import { signToken } from '../security.mjs';
 import { trimProperty } from '../strings.mjs';
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
 
 const DEFAULT_HASH = '$2a$10$QlWNohhjpbGuty6UnyeeJOeKY6dKbiaoFxeWdOoIUiNYaO/ZD2khW';
 
@@ -51,3 +52,18 @@ router.post('new_account', '/', async ctx => {
     };
   }
 });
+
+dotenv.config();
+
+const secret = process.env['JWT_SECRET']
+if (secret === undefined || secret.length === 0) {
+  console.error('ERROR: Missing JWT_SECRET environment variable.');
+  process.exit(2);
+}
+
+export function signToken(claims) {
+  if (!Number.isInteger(claims.exp)) {
+    claims.exp = Math.floor(Date.now() / 1000) + (24 * 60 * 60);
+  }
+  return jwt.sign(claims, secret);
+}
